@@ -47,12 +47,17 @@ export default function Example() {
             toast.warning("Please Login First !")
             navigate("/login")
         }
+
+        if (user.role === "customer"){
+            toast.warning("Yetkisiz Islem!")
+            navigate("/")
+        }
     }, [navigate]);
 
 
 
     const navigationForAdmin = [
-        { name: 'Anasayfa', href: '/', icon: HomeIcon, current: window.location.pathname === "/" },
+        { name: 'Anasayfa', href: '/dashboard ', icon: HomeIcon, current: window.location.pathname === "/" },
         { name: 'Kullanıcılar', href: '/users', icon: UsersIcon, current: window.location.pathname === "/users" },
         { name: 'Ürünler', href: '/products', icon: ShoppingBagIcon, current: window.location.pathname === "/products"},
         { name: 'Kategoriler', href: '/categories', icon: RectangleGroupIcon, current: window.location.pathname === "/categories" },

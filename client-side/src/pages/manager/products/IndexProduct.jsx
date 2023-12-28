@@ -6,6 +6,7 @@ import {toast} from "react-toastify";
 import {HiOutlineTrash} from "react-icons/hi";
 import * as FileSaver from 'file-saver';
 import * as XLSX from 'xlsx';
+import classNames from "classnames";
 
 
 export default function IndexProduct(){
@@ -156,7 +157,7 @@ export default function IndexProduct(){
                         <div className="flex gap-2">
                             <input type="file" onChange={handleFileUpload}
                                    accept=".xls, .xlsx, .xlsx.number, .xls.number"
-                                   className="border border-indigo-500 p-1 rounded-xl"/>
+                                   className="border border-indigo-500 bg-indigo-100 rounded-xl w-56 file:bg-indigo-600 file:rounded-md file:text-white file:shadow-none file:font-semibold file:border-none file:h-full"/>
                             <button
                                 className="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                                 onClick={() => {

@@ -11,7 +11,7 @@ export default function Example() {
       */}
             <main className="relative isolate min-h-screen">
                 <img
-                    src="https://static.vecteezy.com/system/resources/previews/012/667/985/original/abstract-colorful-pride-month-type-font-wallpaper-background-love-is-love-pride-love-festival-rainbow-pride-gradient-fluid-abstract-background-lgbt-flag-pride-month-blur-wallpaper-free-vector.jpg"
+                    src="https://w0.peakpx.com/wallpaper/579/968/HD-wallpaper-dark-road-night.jpg"
                     alt=""
                     className="absolute inset-0 -z-10 h-screen w-full object-cover object-top"
                 />

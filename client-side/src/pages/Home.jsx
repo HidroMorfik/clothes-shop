@@ -1,20 +1,53 @@
 import {Fragment, useEffect, useState} from 'react'
-import { Popover, Transition } from '@headlessui/react'
-import { MagnifyingGlassIcon, ShoppingBagIcon } from '@heroicons/react/24/outline'
+import {Menu, Popover, Transition} from '@headlessui/react'
+import { MagnifyingGlassIcon, ShoppingBagIcon, UsersIcon } from '@heroicons/react/24/outline'
 import {useNavigate} from "react-router-dom";
 import axios from "axios";
 import {toast} from "react-toastify";
+import classNames from "classnames";
+import {HiX} from "react-icons/hi";
+import {BellIcon} from "@heroicons/react/24/outline/index.js";
+import {ChevronDownIcon} from "@heroicons/react/20/solid/index.js";
 
 
 export default function Home() {
     const [sess_id, setSess_id] = useState(sessionStorage.getItem("token") ? sessionStorage.getItem("token") : false);
     const [user, setUser] = useState(sessionStorage.getItem("user") ?  JSON.parse(sessionStorage.getItem("user")) : false);
+    const [modal, setModal] = useState(false);
     const [categories, setCategories] = useState([]);
     const [products, setProducts] = useState([]);
     const navigate = useNavigate();
 
+    const [cart, setCart] = useState([]);
+
+    const addToCart = (product) => {
+        setCart(prevItems => {
+            const existingItem = prevItems.find(item => item.product_id === product.id);
+            if (existingItem) {
+                // Ürün zaten sepette varsa, miktarını güncelle
+                return prevItems.map(item =>
+                    item.product_id === product.id
+                        ? { ...item, quantity: item.quantity + 1, total_price: item.unit_price * (item.quantity + 1) }
+                        : item
+                );
+            } else {
+                // Yeni ürünü sepete ekle
+                return [...prevItems, { product_id: product.id, name: product.name, quantity: 1, unit_price: product.price, total_price: product.price }];
+            }
+        });
+    };
 
     useEffect(() => {
+        console.log(cart)
+    }, [cart]);
+
+
+    useEffect(() => {
+        if (sess_id === false){
+            toast.warning("Please Login First !")
+            navigate("/login")
+        }
+
         axios.get("/categories")
             .then( (resp) => {
                 setCategories( resp.data.data)
@@ -56,19 +89,63 @@ export default function Home() {
                 toast.error(err.response.data.message)
             })
         }
-        }
-    
+    }
+
+    const logout = (e) => {
+        e.preventDefault()
+
+        axios.post('/logout', {
+            sess_id
+        })
+            .then(response => {
+                sessionStorage.removeItem("user")
+                sessionStorage.removeItem("token")
+                toast.success(response.data.message);
+                navigate("/login")
+
+            })
+            .catch(error => {
+                if (error.message) {
+                    toast.error(error.message);
+                }
+            });
+    }
+
+    const userNavigation = [
+        { name: 'Your profile', href: '#', action: null },
+        { name: 'Sign out', href: '/login', action: ()=>{setModal(!modal)} },
+    ]
 
     function classNames(...classes) {
         return classes.filter(Boolean).join(' ')
     }
 
     return (
-        <main className="relative">
-            <div className="bg-white absolute top-0 w-screen z-20">
+        <main className="relative w-screen">
+            {modal &&
+                <div className="flex justify-center items-center absolute h-full w-full z-50 bg-gray-900 bg-opacity-50">
+                    <div className="flex flex-col gap-y-8 bg-white p-12 rounded-xl relative">
+                        <button onClick={()=>setModal(!modal)} className="rounded-full absolute top-2 right-2 border text-l flex justify-center items-center p-1">
+                            <HiX/>
+                        </button>
+                        <h4>
+                            Çıkış yapmak istediğnize emin misiniz
+                        </h4>
+                        <div className="grid grid-cols-2 gap-10 justify-between items-center px-8">
+                            <button className="transition-transform duration-300 hover:scale-105 text-red-500 border border-red-600 bg-red-50 px-2 py-1 rounded-md" onClick={logout}>
+                                Evet
+                            </button>
+                            <button className="transition-transform duration-300 hover:scale-105 text-blue-500 border border-blue-600 bg-blue-50 px-2 py-1 rounded-md" onClick={()=>{setModal(false)}}>
+                                Vazgeç
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+            <div className="bg-white absolute top-0 w-full z-20">
                 <header className="relative bg-white">
-                    <nav aria-label="Top" className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-                        <div className="border-b border-gray-200 px-4 pb-14 sm:px-0 sm:pb-0">
+                    <nav aria-label="Top" className="sm:px-6 lg:px-8 border-b ">
+                        <div className="border-gray-200 px-4 pb-14 sm:px-0 sm:pb-0">
                             <div className="flex h-16 items-center justify-between">
                                 {/* Logo */}
                                 <div className="flex flex-1">
@@ -180,9 +257,65 @@ export default function Home() {
                                                 aria-hidden="true"
                                             />
                                             <span
-                                                className="ml-2 text-sm font-medium text-gray-700 group-hover:text-gray-800">0</span>
+                                                className="ml-2 text-sm font-medium text-gray-700 group-hover:text-gray-800">{cart.length}</span>
                                             <span className="sr-only">items in cart, view bag</span>
                                         </a>
+                                    </div>
+                                    <div className="pl-3">
+                                        <div className="flex items-center gap-x-4 lg:gap-x-6">
+                                            {/* Separator */}
+                                            <div className="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-900/10"
+                                                 aria-hidden="true"/>
+
+                                            {/* Profile dropdown */}
+                                            <Menu as="div" className="relative">
+                                                <Menu.Button className="-m-1.5 flex items-center p-1.5">
+                                                    <span className="sr-only">Open user menu</span>
+                                                    <img
+                                                        className="h-8 w-8 rounded-full bg-gray-50"
+                                                        src={`https://avatar.oxro.io/avatar.svg?name=${user.name} ${user.surname}`}
+                                                        alt=""
+                                                    />
+                                                    <span className="hidden lg:flex lg:items-center">
+                      <div className="ml-4 text-sm font-semibold flex flex-col leading-6 text-gray-900"
+                           aria-hidden="true">
+                            {user.name} {user.surname}
+                      </div>
+
+                      <ChevronDownIcon className="ml-2 h-5 w-5 text-gray-400" aria-hidden="true"/>
+                    </span>
+                                                </Menu.Button>
+                                                <Transition
+                                                    as={Fragment}
+                                                    enter="transition ease-out duration-100"
+                                                    enterFrom="transform opacity-0 scale-95"
+                                                    enterTo="transform opacity-100 scale-100"
+                                                    leave="transition ease-in duration-75"
+                                                    leaveFrom="transform opacity-100 scale-100"
+                                                    leaveTo="transform opacity-0 scale-95"
+                                                >
+                                                    <Menu.Items
+                                                        className="absolute right-0 z-10 mt-2.5 w-32 origin-top-right rounded-md bg-white py-2 shadow-lg ring-1 ring-gray-900/5 focus:outline-none">
+                                                        {userNavigation.map((item) => (
+                                                            <Menu.Item key={item.name}>
+                                                                {({active}) => (
+                                                                    <button
+                                                                        onClick={item.action}
+                                                                        className={classNames(
+                                                                            active ? 'bg-gray-50' : '',
+                                                                            'block px-3 py-1 text-sm leading-6 text-gray-900'
+                                                                        )}
+                                                                    >
+                                                                        {item.name}
+                                                                    </button>
+                                                                )}
+                                                            </Menu.Item>
+                                                        ))}
+                                                    </Menu.Items>
+                                                </Transition>
+                                            </Menu>
+                                        </div>
+
                                     </div>
                                 </div>
                             </div>
@@ -205,8 +338,9 @@ export default function Home() {
                                             className="h-full w-full object-cover object-center"
                                         />
                                     </div>
-                                    <div className="relative mt-4">
+                                    <div className="relative mt-4 flex justify-between">
                                         <h3 className="text-sm font-medium text-gray-900">{product.name}</h3>
+                                        <h2 className="text-xs font-light text-gray-600">{product.category_name}</h2>
                                     </div>
                                     <div
                                         className="absolute inset-x-0 top-0 flex h-72 items-end justify-end overflow-hidden rounded-lg p-4">
@@ -214,16 +348,16 @@ export default function Home() {
                                             aria-hidden="true"
                                             className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-black opacity-50"
                                         />
-                                        <p className="relative text-lg font-semibold text-white">{product.price}</p>
+                                        <p className="relative text-lg font-semibold text-white">{product.price}₺</p>
                                     </div>
                                 </div>
                                 <div className="mt-6">
-                                    <a
-                                        href='#'
+                                    <button
+                                        onClick={()=>{addToCart(product)}}
                                         className="relative flex items-center justify-center rounded-md border border-transparent bg-gray-100 px-8 py-2 text-sm font-medium text-gray-900 hover:bg-gray-200"
                                     >
                                         Add to bag<span className="sr-only">, {product.name}</span>
-                                    </a>
+                                    </button>
                                 </div>
                             </div>
                         ))}
