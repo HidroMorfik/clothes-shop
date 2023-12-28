@@ -1,0 +1,9 @@
+USE master
+GO
+
+CREATE PROCEDURE RestoreDatabase
+    @backupFile VARCHAR(50)
+AS
+BEGIN
+    RESTORE DATABASE VTYSCalisma FROM DISK = @backupFile WITH REPLACE;
+END

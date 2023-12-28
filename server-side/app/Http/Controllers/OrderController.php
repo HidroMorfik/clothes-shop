@@ -2,41 +2,79 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\User;
+use http\Exception\InvalidArgumentException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
-
-    public function index(){
-        $orders =  DB::select(
-            'SELECT * FROM orders'
-        );
-
-        return response([
-            "code" => "201",
-            "message" => "all orders successfully indexed",
+    public function getOrdersByPaymentType($paymentType)
+    {
+        $orders = DB::select('EXEC GetOrdersByPaymentType ?', [$paymentType]);
+        return response()->json([
+            "message" => "successfully indexed",
             "data" => $orders
-        ]);
+        ],201);
     }
 
-    public function show($id){
+    public function index(Request $request){
+        if (User::isManager($request->header("sess_id"))){
+            $orders =  DB::select(
+                'SELECT orders.*, users.name as user_name, users.surname as user_surname
+                        FROM orders
+                        JOIN users ON orders.user_id = users.id'
+            );
+
+            return response()->json([
+                "message" => "all orders successfully indexed",
+                "data" => $orders
+            ],201);
+        }
+        else {
+            $orders_by_id = DB::select("
+            SELECT * FROM orders
+                        WHERE user_id = (SELECT user_id FROM sessions
+                                                        WHERE sess_id = ?)", [$request->header("sess_id")]);
+            return response()->json([
+                "message" => "Orders successfully showed",
+                "data" => $orders_by_id
+            ],201);
+        }
+    }
+
+    public function show(Request $request, $id){
         $order =  DB::select(
             'SELECT * FROM orders WHERE (id = ?)', [$id]
         );
 
         if($order != [])
-            return response([
-                "code" => "201",
-                "message" => "Order successfully showed",
-                "data" => $order
-            ]);
+            if (User::isManager($request->header("sess_id"))){
+                return response()->json([
+                    "message" => "Order successfully showed",
+                    "data" => $order
+                ],201);
+            }
+            else{
+                $auth_user_id = DB::select("SELECT user_id FROM sessions WHERE sess_id = ? ", [$request->header("sess_id")]);
+
+                if ($auth_user_id[0]->user_id == $order[0]->user_id){
+                    return response()->json([
+                        "message" => "Order successfully showed",
+                        "data" => $order
+                    ],201);
+                }
+                else
+                    return response()->json([
+                        "message" => "Yetkisiz İslem"
+                    ],403);
+            }
         else
-            return response([
-                "code" => "501",
+            return response()->json([
                 "message" => "Order not found",
                 "data" => null
-            ]);
+            ],401);
+
     }
 
 
@@ -46,16 +84,14 @@ class OrderController extends Controller
             "user_id" => "required",
             "payment_type" => "required",
             "total_price" => "required",
-            "word" => "required",
-            "value" => "required"
         ]);
 
         $user_id = $request->input('user_id');
         $payment_type = $request->input('payment_type');
         $total_price= $request->input('total_price');
 
-        $word = $request->input('word');
-        $value = $request->input('value');
+        $product_info = $request->input('product_info');
+        $address = $request->input('address');
 
         $is_created = DB::insert('INSERT INTO orders (user_id, payment_type, total_price) VALUES (?, ?, ?)', [$user_id, $payment_type, $total_price]);
 
@@ -65,17 +101,17 @@ class OrderController extends Controller
                         WHERE user_id = ? AND payment_type = ? AND total_price = ?
                         ORDER BY created_at DESC OFFSET 0 ROWS FETCH NEXT 1 ROWS ONLY',
                 [$user_id, $payment_type, $total_price]);
-            $create_meta = DB::insert('INSERT INTO order_meta (order_id, word, value) VALUES (?, ?, ?)', [$order[0]->id, $word, $value]);
+//            $update_meta = DB::update('UPDATE order_meta SET product_info = ?, address = ? WHERE order_id = ?', [$product_info, $address , $order[0]->id]);
 
-            if ($create_meta == true){
-                $meta = DB::select('SELECT * FROM order_meta WHERE order_id = ?',[$order[0]->id]);
+            if ($is_created == true){
+//                $meta = DB::select('SELECT * FROM order_meta WHERE order_id = ?',[$order[0]->id]);
 
                 return response([
                     "code" => "201",
                     "message" => "Order successfully created",
                     "data" => [
                         'order' => $order,
-                        'order_meta' => $meta
+                        'order_meta' => ""
                     ]
                 ]);
             }
@@ -97,14 +133,14 @@ class OrderController extends Controller
             $payment_type = $request->input('payment_type')?? $existingOrder[0]->payment_type;
             $total_price= $request->input('total_price')?? $existingOrder[0]->total_price;
 
-            $word = $request->input('word')?? $existingMeta[0]->word;
-            $value = $request->input('value')?? $existingMeta[0]->value;
+            $product_info = $request->input('product_info')?? $existingMeta[0]->word;
+            $address = $request->input('address')?? $existingMeta[0]->value;
 
 
             $updateResult = DB::update('UPDATE orders SET user_id = ?, payment_type = ?, total_price = ?  WHERE id = ?', [$user_id, $payment_type, $total_price, $id]);
 
             if ($updateResult > 0) {
-                $update_meta = DB::update('UPDATE order_meta SET word = ?, value = ? WHERE order_id = ?', [$word, $value, $id]);
+                $update_meta = DB::update('UPDATE order_meta SET product_info = ?, address = ? WHERE order_id = ?', [$product_info, $address, $id]);
                 if ($update_meta > 0){
                     $updatedOrder = DB::select('SELECT * FROM orders WHERE (id = ?)', [$id]);
                     $meta = DB::select('SELECT * FROM order_meta WHERE (order_id = ?)', [$id]);
@@ -166,3 +202,7 @@ class OrderController extends Controller
 
 
 }
+
+
+
+

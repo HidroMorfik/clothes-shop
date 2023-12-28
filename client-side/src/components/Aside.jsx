@@ -11,42 +11,94 @@ import {
     HomeIcon,
     UsersIcon,
     XMarkIcon,
-    Bars3CenterLeftIcon
-
+    Bars3CenterLeftIcon,
 } from '@heroicons/react/24/outline'
 import { ChevronDownIcon, MagnifyingGlassIcon } from '@heroicons/react/20/solid'
-import {NavLink, Link} from "react-router-dom";
+import { HiX } from "react-icons/hi";
+import {Link, useNavigate} from "react-router-dom";
+import axios from "axios";
+import classNames from "classnames";
+import {toast} from "react-toastify";
 
 
 
-const navigation = [
-    { name: 'Anasayfa', href: '/', icon: HomeIcon, current: window.location.pathname === "/" },
-    { name: 'Kullanıcılar', href: '/users', icon: UsersIcon, current: window.location.pathname === "/users" },
-    { name: 'Ürünler', href: '#', icon: ShoppingBagIcon, current: false },
-    { name: 'Siparişler', href: '#', icon: Bars3CenterLeftIcon, current: false },
-    { name: 'Kategoriler', href: '#', icon: RectangleGroupIcon, current: false },
-    { name: 'Raporlar', href: '#', icon: ChartPieIcon, current: false },
-]
 
 const teams = [
     { id: 1, name: 'Heroicons', href: '#', initial: 'H', current: false },
     { id: 2, name: 'Tailwind Labs', href: '#', initial: 'T', current: false },
     { id: 3, name: 'Workcation', href: '#', initial: 'W', current: false },
 ]
-const userNavigation = [
-    { name: 'Your profile', href: '#' },
-    { name: 'Sign out', href: '/login' },
-]
 
-function classNames(...classes) {
-    return classes.filter(Boolean).join(' ')
-}
+
 
 
 
 
 export default function Example() {
     const [sidebarOpen, setSidebarOpen] = useState(false)
+    const [modal, setModal] = useState(false);
+    const [sess_id, setSess_id] = useState(sessionStorage.getItem("token") ? sessionStorage.getItem("token") : false);
+    const navigate = useNavigate()
+    const [user, setUser] = useState(sessionStorage.getItem("user") ? JSON.parse(sessionStorage.getItem("user")) : false);
+
+
+    useEffect(() => {
+        if (sess_id === false){
+            toast.warning("Please Login First !")
+            navigate("/login")
+        }
+    }, [navigate]);
+
+
+
+    const navigationForAdmin = [
+        { name: 'Anasayfa', href: '/', icon: HomeIcon, current: window.location.pathname === "/" },
+        { name: 'Kullanıcılar', href: '/users', icon: UsersIcon, current: window.location.pathname === "/users" },
+        { name: 'Ürünler', href: '/products', icon: ShoppingBagIcon, current: window.location.pathname === "/products"},
+        { name: 'Kategoriler', href: '/categories', icon: RectangleGroupIcon, current: window.location.pathname === "/categories" },
+        { name: 'Siparişler', href: '/orders', icon: Bars3CenterLeftIcon, current: window.location.pathname === "/orders" },
+        { name: 'Raporlar', href: '#', icon: ChartPieIcon, current: false },
+    ]
+
+
+    const navigationForManager = [
+        { name: 'Anasayfa', href: '/', icon: HomeIcon, current: window.location.pathname === "/" },
+        { name: 'Ürünler', href: '/products', icon: ShoppingBagIcon, current: window.location.pathname === "/products"},
+        { name: 'Kategoriler', href: '/categories', icon: RectangleGroupIcon, current: window.location.pathname === "/categories" },
+        { name: 'Siparişler', href: '/orders', icon: Bars3CenterLeftIcon, current: window.location.pathname === "/orders" },
+        { name: 'Raporlar', href: '#', icon: ChartPieIcon, current: false },
+    ]
+
+
+
+
+
+
+
+    const logout = (e) => {
+        e.preventDefault()
+
+        axios.post('/logout', {
+            sess_id
+        })
+            .then(response => {
+                sessionStorage.removeItem("user")
+                sessionStorage.removeItem("token")
+                toast.success(response.data.message);
+                navigate("/login")
+
+            })
+            .catch(error => {
+                if (error.message) {
+                    toast.error(error.message);
+                }
+            });
+    }
+
+    const userNavigation = [
+        { name: 'Your profile', href: '#', action: null },
+        { name: 'Sign out', href: '/login', action: ()=>{setModal(!modal)} },
+    ]
 
     return (
         <>
@@ -59,6 +111,26 @@ export default function Example() {
         ```
       */}
             <div>
+                {modal && 
+                    <div className="flex justify-center items-center absolute h-full w-full z-50 bg-gray-900 bg-opacity-50">
+                        <div className="flex flex-col gap-y-8 bg-white p-12 rounded-xl relative">
+                            <button onClick={()=>setModal(!modal)} className="rounded-full absolute top-2 right-2 border text-l flex justify-center items-center p-1">
+                                <HiX/>
+                            </button>
+                            <h4>
+                                Çıkış yapmak istediğnize emin misiniz
+                            </h4>
+                            <div className="grid grid-cols-2 gap-10 justify-between items-center px-8">
+                                <button className="transition-transform duration-300 hover:scale-105 text-red-500 border border-red-600 bg-red-50 px-2 py-1 rounded-md" onClick={logout}>
+                                    Evet
+                                </button>
+                                <button className="transition-transform duration-300 hover:scale-105 text-blue-500 border border-blue-600 bg-blue-50 px-2 py-1 rounded-md" onClick={()=>{setModal(false)}}>
+                                    Vazgeç
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
                 <Transition.Root show={sidebarOpen} as={Fragment}>
                     <Dialog as="div" className="relative z-50 lg:hidden" onClose={setSidebarOpen}>
                         <Transition.Child
@@ -113,10 +185,31 @@ export default function Example() {
                                             <ul role="list" className="flex flex-1 flex-col gap-y-7">
                                                 <li>
                                                     <ul role="list" className="-mx-2 space-y-1">
-                                                        {navigation.map((item) => (
+                                                        {user.role === "admin" && navigationForAdmin.map((item) => (
+                                                                <li key={item.name}>
+                                                                    <a
+                                                                        href={item.href}
+                                                                        className={classNames(
+                                                                            item.current
+                                                                                ? 'bg-indigo-700 text-white'
+                                                                                : 'text-indigo-200 hover:text-white hover:bg-indigo-700',
+                                                                            'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold'
+                                                                        )}>
+                                                                        <item.icon
+                                                                            className={classNames(
+                                                                                item.current ? 'text-white' : 'text-indigo-200 group-hover:text-white',
+                                                                                'h-6 w-6 shrink-0'
+                                                                            )}
+                                                                            aria-hidden="true"
+                                                                        />
+                                                                        {item.name}
+                                                                    </a>
+                                                                </li>
+                                                        ))}
+                                                        {user.role === "manager" && navigationForManager.map((item) => (
                                                             <li key={item.name}>
-                                                                <NavLink
-                                                                    to={item.href}
+                                                                <a
+                                                                    href={item.href}
                                                                     className={classNames(
                                                                         item.current
                                                                             ? 'bg-indigo-700 text-white'
@@ -131,7 +224,7 @@ export default function Example() {
                                                                         aria-hidden="true"
                                                                     />
                                                                     {item.name}
-                                                                </NavLink>
+                                                                </a>
                                                             </li>
                                                         ))}
                                                     </ul>
@@ -183,20 +276,51 @@ export default function Example() {
                 {/* Static sidebar for desktop */}
                 <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
                     {/* Sidebar component, swap this element with another sidebar if you like */}
-                    <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-indigo-600 px-6 pb-4">
-                        <div className="flex h-16 shrink-0 items-center">
+                    <div className={classNames({
+                        "flex grow flex-col gap-y-5 overflow-y-auto bg-indigo-600 px-6 pb-4" : true,
+                        "bg-indigo-600" : user.role === "admin",
+                        "bg-sky-600" : user.role === "manager"
+                    })}>
+                        <div className="flex h-16 shrink-0 items-center text-white font-bold gap-x-6 border-b justify-start">
                             <img
                                 className="h-8 w-auto"
                                 src="https://tailwindui.com/img/logos/mark.svg?color=white"
                                 alt="Your Company"
                             />
+                            {user.role === "admin" &&
+                                <span>Admin Paneli</span>
+                            }
+                            {user.role === "manager" &&
+                                <span>Yönetici Paneli</span>
+                            }
+
                         </div>
                         <nav className="flex flex-1 flex-col">
                             <ul role="list" className="flex flex-1 flex-col gap-y-7">
                                 <li>
                                     <ul role="list" className="-mx-2 space-y-1">
-                                        {navigation.map((item) => (
-
+                                        {user.role === "admin" && navigationForAdmin.map((item) => (
+                                            <li key={item.name}>
+                                                <a
+                                                    href={item.href}
+                                                    className={classNames(
+                                                        item.current
+                                                            ? 'bg-indigo-700 text-white'
+                                                            : 'text-indigo-200 hover:text-white hover:bg-indigo-700',
+                                                        'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold'
+                                                    )}>
+                                                    <item.icon
+                                                        className={classNames(
+                                                            item.current ? 'text-white' : 'text-indigo-200 group-hover:text-white',
+                                                            'h-6 w-6 shrink-0'
+                                                        )}
+                                                        aria-hidden="true"
+                                                    />
+                                                    {item.name}
+                                                </a>
+                                            </li>
+                                        ))}
+                                        {user.role === "manager" && navigationForManager.map((item) => (
                                             <li key={item.name}>
                                                 <a
                                                     href={item.href}
@@ -301,13 +425,14 @@ export default function Example() {
                                         <span className="sr-only">Open user menu</span>
                                         <img
                                             className="h-8 w-8 rounded-full bg-gray-50"
-                                            src="https://avatar.oxro.io/avatar.svg?name=Zafer Mesut"
+                                            src= {`https://avatar.oxro.io/avatar.svg?name=${user.name} ${user.surname}`}
                                             alt=""
                                         />
                                         <span className="hidden lg:flex lg:items-center">
-                      <span className="ml-4 text-sm font-semibold leading-6 text-gray-900" aria-hidden="true">
-                        Zafer Mesut
-                      </span>
+                      <div className="ml-4 text-sm font-semibold flex flex-col leading-6 text-gray-900" aria-hidden="true">
+                            {user.name} {user.surname}
+                      </div>
+
                       <ChevronDownIcon className="ml-2 h-5 w-5 text-gray-400" aria-hidden="true" />
                     </span>
                                     </Menu.Button>
@@ -324,15 +449,15 @@ export default function Example() {
                                             {userNavigation.map((item) => (
                                                 <Menu.Item key={item.name}>
                                                     {({ active }) => (
-                                                        <NavLink
-                                                            to={item.href}
+                                                        <button
+                                                            onClick={item.action}
                                                             className={classNames(
                                                                 active ? 'bg-gray-50' : '',
                                                                 'block px-3 py-1 text-sm leading-6 text-gray-900'
                                                             )}
                                                         >
                                                             {item.name}
-                                                        </NavLink>
+                                                        </button>
                                                     )}
                                                 </Menu.Item>
                                             ))}

@@ -4,14 +4,22 @@ import classNames from "classnames";
 import {Link, useNavigate} from "react-router-dom";
 import {useEffect, useState} from "react";
 import {toast} from "react-toastify";
+import {RiThreadsFill} from "react-icons/ri";
+import {HiOutlineTrash} from "react-icons/hi";
 
-export default function Index(){
+export default function IndexUser(){
     const [users, setUsers] = useState(false);
 
     const navigate = useNavigate();
+    const [sess_id, setSess_id] = useState(sessionStorage.getItem("token") ? sessionStorage.getItem("token") : false);
 
     useEffect(() => {
-        axios.get("/users")
+        axios.get("/users",{
+            withCredentials: true,
+            headers: {
+                'sess_id': sess_id
+            }
+        })
             .then( (resp) => {
                 setUsers(resp.data.data)
 
@@ -19,6 +27,22 @@ export default function Index(){
             toast.error(err.response.data.message)
         })
     }, [navigate]);
+
+    const deleteHandle = (id) => {
+          axios.delete(`/users/delete/${id}`,{
+              withCredentials: true,
+              headers: {
+                  'sess_id': sess_id
+              }
+          })
+              .then( (resp) => {
+                  toast.success(resp.data.message)
+                  window.location.reload()
+              }).catch( (err) => {
+              toast.error(err.response.data.message)
+          })
+
+    }
 
 
 
@@ -33,12 +57,13 @@ export default function Index(){
                         </p>
                     </div>
                     <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
-                        <button
+                        <a
+                            href="/users/create"
                             type="button"
                             className="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                         >
                             Kullanıcı Ekle
-                        </button>
+                        </a>
                     </div>
                 </div>
                 <div className="mt-8 flow-root">
@@ -74,10 +99,13 @@ export default function Index(){
                                             <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{person.surname}</td>
                                             <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{person.email}</td>
                                             <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{person.role}</td>
-                                            <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                                                <a href="#" className="text-indigo-600 hover:text-indigo-900">
-                                                    Edit<span className="sr-only">, {person.name}</span>
+                                            <td className="whitespace-nowrap py-4 pl-3 pr-4 flex justify-end gap-4 text-right text-sm font-medium sm:pr-6">
+                                                <a href={`/users/update/${person.id}`} className="text-indigo-600 hover:text-indigo-900">
+                                                    Düzenle<span className="sr-only">Edit</span>
                                                 </a>
+                                                <button onClick={()=>{deleteHandle(person.id)}} className="text-red-500 transition-all duration-300 hover:scale-105 hover:text-red-600">
+                                                    <HiOutlineTrash size={16}/>
+                                                </button>
                                             </td>
                                         </tr>
                                     ))}

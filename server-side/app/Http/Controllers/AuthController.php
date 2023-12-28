@@ -15,36 +15,42 @@ class AuthController extends Controller
         $email = $request->input("email");
         $password = md5($request->input("password"));
 
-        $user = DB::select("SELECT * FROM users WHERE email = ? AND password = ?", [$email, $password]);
+        $user = DB::select("SELECT id , name, surname, email, role, zip, created_at, updated_at FROM users WHERE email = ? AND password = ?", [$email, $password]);
+
 
         if ($user) {
+            $selectCurrentSession = DB::select('SELECT * FROM sessions WHERE user_id = ?',[$user[0]->id]);
+            if ($selectCurrentSession){
+                DB::delete('DELETE FROM sessions WHERE user_id = ?', [$user[0]->id]);
+            }
+
             $uuid = Str::uuid()->toString();
             $expiredAt = now()->addMinute(1);
             $createdSession = DB::insert("INSERT INTO sessions (sess_id, user_id, expired_at) VALUES (?, ?, ?)", [$uuid, $user[0]->id, $expiredAt]);
             if ($createdSession){
                 $selectsess_id = DB::select('SELECT sess_id FROM sessions WHERE user_id = ?',[$user[0]->id]);
                 return response()->json([
-                    "code" => "201",
                     "user" => $user[0],
-                    "message" => "User logged in successfully",
-                    "token" => $selectsess_id
-                ]);
+                    "token" => $selectsess_id[0]->sess_id,
+                    "message" => "User logged in successfully"
+                ],201);
             }
             else
                 return response()->json([
-                    "code" => "501",
-                    "message" => "User login failed",
-                    "data" => null
-                ]);
+                    "message" => "User login failed"
+                ],501);
 
         } else {
-            return response([
-                "code" => "401",
+            return response()->json([
                 "message" => "Invalid credentials",
-                "data" => null
-            ]);
+            ],401);
         }
     }
+
+
+
+
+
     public function logout(Request $request)
     {
         $sess_id = $request->input('sess_id');

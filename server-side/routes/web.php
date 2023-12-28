@@ -6,6 +6,7 @@ use \App\Http\Controllers\CityController;
 use \App\Http\Controllers\CategoryController;
 use \App\Http\Controllers\ProductsController;
 use \App\Http\Controllers\OrderController;
+use \App\Http\Controllers\DatabaseBackupController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -22,8 +23,8 @@ Route::post("/login", [\App\Http\Controllers\AuthController::class, "login"])->n
 
 Route::post("/logout", [\App\Http\Controllers\AuthController::class, "logout"])->name("logout");
 
-Route::post("/sil", function (){
-    $deletesession = \Illuminate\Support\Facades\DB::delete("DELETE FROM sessions WHERE sess_id='cefaae7e-e2f4-4e95-b793-9d3d4e74db22'");
+Route::get("/said", function (){
+    dd("said");
 });
 
 
@@ -33,17 +34,25 @@ Route::post("/sil", function (){
 //DELETE (SUNUCUDAKİ VERİYİ SİLME)
 
 // USER ENDPOINT
-Route::group(["prefix"=>"users"], function (){
-    Route::get("/",[UserController::class,"index"])->name("users");
-    Route::get("/{id}",[UserController::class,"show"])->name("users.show");
-    Route::post("/create", [UserController::class,"store"])->name("users.create");
-    Route::put("/update/{id}", [UserController::class,"update"])->name("users.update");
-    Route::delete("/delete/{id}", [UserController::class,"delete"])->name("users.delete");
-});
+
+
+
 
 
 Route::group(["middleware"=> "auth"], function (){
+    Route::group(["prefix"=>"db"], function (){
+        Route::get("/",[DatabaseBackupController::class,"index"]);
+        Route::post("/backup",[DatabaseBackupController::class,"backup"]);
+        Route::post("/restore",[DatabaseBackupController::class,"restore"]);
+    });
 
+    Route::group(["prefix"=>"users"], function (){
+        Route::get("/",[UserController::class,"index"])->name("users");
+        Route::get("/{id}",[UserController::class,"show"])->name("users.show");
+        Route::post("/create", [UserController::class,"store"])->name("users.create");
+        Route::put("/update/{id}", [UserController::class,"update"])->name("users.update");
+        Route::delete("/delete/{id}", [UserController::class,"delete"])->name("users.delete");
+    });
 
     // CITES ENDPOINT
     Route::group(["prefix"=>"cities"], function (){
@@ -56,8 +65,6 @@ Route::group(["middleware"=> "auth"], function (){
 
     // CATEGORIES ENDPOINT
     Route::group(["prefix"=>"categories"], function (){
-        Route::get("/",[CategoryController::class,"index"])->name("categories");
-        Route::get("/{id}",[CategoryController::class,"show"])->name("categories.show");
         Route::post("/create", [CategoryController::class,"store"])->name("categories.create");
         Route::put("/update/{id}", [CategoryController::class,"update"])->name("categories.update");
         Route::delete("/delete/{id}", [CategoryController::class,"delete"])->name("categories.delete");
@@ -65,8 +72,6 @@ Route::group(["middleware"=> "auth"], function (){
 
     // PRODUCTS ENDPOINT
     Route::group(["prefix"=>"products"], function (){
-        Route::get("/",[ProductsController::class,"index"])->name("products");
-        Route::get("/{id}",[ProductsController::class,"show"])->name("products.show");
         Route::post("/create", [ProductsController::class,"store"])->name("products.create");
         Route::put("/update/{id}", [ProductsController::class,"update"])->name("products.update");
         Route::delete("/delete/{id}", [ProductsController::class,"delete"])->name("products.delete");
@@ -75,22 +80,22 @@ Route::group(["middleware"=> "auth"], function (){
     // ORDERS ENDPOINT
     Route::group(["prefix"=>"orders"], function (){
         Route::get("/",[OrderController::class,"index"])->name("orders");
+        Route::get("/by-payment-type/{paymentType}",[OrderController::class,"getOrdersByPaymentType"]);
         Route::get("/{id}",[OrderController::class,"show"])->name("orders.show");
         Route::post("/create", [OrderController::class,"store"])->name("orders.create");
         Route::put("/update/{id}", [OrderController::class,"update"])->name("orders.update");
         Route::delete("/delete/{id}", [OrderController::class,"delete"])->name("orders.delete");
     });
-
-//
-//
-//// ORDER_META ENDPOINT
-//Route::group(["prefix"=>"users"], function (){
-//    Route::get("/",[UserController::class,"index"])->name("users");
-//    Route::get("/{id}",[UserController::class,"show"])->name("users.show");
-//    Route::post("/create", [UserController::class,"store"])->name("users.create");
-//    Route::put("/update/{id}", [UserController::class,"update"])->name("users.update");
-//    Route::delete("/delete/{id}", [UserController::class,"delete"])->name("users.delete");
-//});
-
 });
 
+
+Route::group(["prefix"=>"products"], function (){
+    Route::get("/",[ProductsController::class,"index"])->name("products");
+    Route::get("/by-category/{category_id}", [ProductsController::class, "getProductsByCategory"]);
+    Route::get("/{id}",[ProductsController::class,"show"])->name("products.show");
+});
+
+Route::group(["prefix"=>"categories"], function () {
+    Route::get("/", [CategoryController::class, "index"])->name("categories");
+    Route::get("/{id}", [CategoryController::class, "show"])->name("categories.show");
+});

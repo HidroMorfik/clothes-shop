@@ -5,8 +5,10 @@ import axios from "axios";
 import "./styles/tailwind.css"
 
 import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 import Route from "./route.jsx";
+
 
 axios.defaults.baseURL = import.meta.env.VITE_API_URL
 
@@ -23,7 +25,9 @@ const options = {
 
 ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>
+        <main>
             <Route/>
-        <ToastContainer {...options} />
+            <ToastContainer {...options} />
+        </main>
     </React.StrictMode>
 )

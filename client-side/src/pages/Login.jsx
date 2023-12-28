@@ -8,21 +8,35 @@ export default function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const navigate = useNavigate()
+    const [error, setError] = useState(false);
+
+
     const submitHandle = (e) => {
         e.preventDefault()
-
         axios.post('/login', {
             email,
             password
+        }, {
+            withCredentials: true,
+            headers: {
+                'Content-Type': 'application/json'
+            }
         })
             .then(response => {
-                const { user, token, message } = response.data.data
-                toast.success(message);
-                navigate("/")
+                setError(false)
+                const { user, token, message } = response.data
+                sessionStorage.setItem("user", JSON.stringify(user))
+                sessionStorage.setItem("token", token)
+
+                if (user.role !== "customer"){
+                    navigate("/")
+                }else{
+                    navigate("/products")
+                }
+
             })
             .catch(error => {
-                setError(error.response.data)
-                console.log(error.response.data.message)
+                setError(error.response.data.message)
                 if (error.response.data.message) {
                     toast.error(error.response.data.message);
                 }
@@ -76,7 +90,6 @@ export default function Login() {
                             </div>
                             <div className="mt-2">
                                 <input
-
                                     id="password"
                                     name="password"
                                     type="password"
