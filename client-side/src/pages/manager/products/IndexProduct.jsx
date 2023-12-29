@@ -206,11 +206,11 @@ export default function IndexProduct(){
                                         </th>
                                         <th scope="col"
                                             className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                                            Açıklama
+                                            Oluşturulma Tarihi
                                         </th>
                                         <th scope="col"
                                             className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                                            Tarih
+                                            Güncelleme Tarihi
                                         </th>
                                         <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
                                             <span className="sr-only">Edit</span>
@@ -226,8 +226,8 @@ export default function IndexProduct(){
                                             <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{product.price}₺</td>
                                             <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{product.category_name}</td>
                                             <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{product.stock}</td>
-                                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{product.descripton}</td>
                                             <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{product.created_at}</td>
+                                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{product.updated_at}</td>
                                             <td className="whitespace-nowrap py-4 pl-3 pr-4 flex justify-end gap-4 text-right text-sm font-medium sm:pr-6">
                                                 <a href={`/products/update/${product.id}`}
                                                    className="text-indigo-600 hover:text-indigo-900">
@@ -243,7 +243,7 @@ export default function IndexProduct(){
                                         </tr>
                                     ))}
                                     </tbody>
-                                </table>
+                            </table>
                             </div>
                         </div>
                     </div>

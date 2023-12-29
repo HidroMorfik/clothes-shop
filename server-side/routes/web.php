@@ -23,8 +23,11 @@ Route::post("/login", [\App\Http\Controllers\AuthController::class, "login"])->n
 
 Route::post("/logout", [\App\Http\Controllers\AuthController::class, "logout"])->name("logout");
 
-Route::get("/said", function (){
-    dd("said");
+Route::get("/md5/{metin}", function ($metin){
+    dd([
+        "metin" => $metin,
+        "md5 sifreli hali" => md5($metin)
+    ]);
 });
 
 

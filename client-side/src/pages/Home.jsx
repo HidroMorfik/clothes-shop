@@ -334,7 +334,7 @@ export default function Home() {
                                     <div className="relative h-72 w-full overflow-hidden rounded-lg">
                                         <img
                                             src={product.picture}
-                                            alt="foto"
+                                            alt="fotograf"
                                             className="h-full w-full object-cover object-center"
                                         />
                                     </div>

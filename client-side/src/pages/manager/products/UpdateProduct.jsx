@@ -132,7 +132,6 @@ export default function UpdateProduct() {
                                     <div className="mt-2">
                                         <textarea
                                             onKeyUpCapture={({ target }) => setDescription(target.value)}
-                                            required
                                             id="description"
                                             name="description"
                                             defaultValue={product.descripton}

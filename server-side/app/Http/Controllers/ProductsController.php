@@ -103,12 +103,12 @@ class ProductsController extends Controller
                 $category_id = $request->input('category_id')?? $existingProduct[0]->category_id;
                 $name = $request->input('name')?? $existingProduct[0]->name;
                 $price = $request->input('price')?? $existingProduct[0]->price;
-                $description = $request->input('description')?? $existingProduct[0]->descripton;
+                $description = $request->input('description')?? $existingProduct[0]->description;
                 $stock = $request->input('stock')?? $existingProduct[0]->stock;
                 $picture = $request->input('price')?? $existingProduct[0]->price;
 
 
-                $updateResult = DB::update('UPDATE products SET category_id = ?, name = ?, price = ?, description = ?, stock = ?, price = ? WHERE id = ?', [$category_id, $name, $price, $description, $stock, $picture, $id]);
+                $updateResult = DB::update('UPDATE products SET category_id = ?, name = ?, price = ?, description = ?, stock = ?, picture = ? WHERE id = ?', [$category_id, $name, $price, $description, $stock, $picture, $id]);
 
 
 
